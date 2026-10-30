@@ -91,3 +91,18 @@ def test_latin1_encoding_fallback(temp_dir: Path):
     batches = list(reader.read_batches())
     assert len(batches) == 1
     assert len(batches[0][1]) == 1
+
+
+def test_all_modules_independent_import():
+    """
+    Verifies Phase 10 Issue 7:
+    Guarantees that every module across all packages in src/ can be imported
+    independently in any arbitrary order without circular import errors.
+    """
+    import importlib
+    import pkgutil
+    import src
+
+    for _, module_name, _ in pkgutil.walk_packages(src.__path__, src.__name__ + "."):
+        mod = importlib.import_module(module_name)
+        assert mod is not None

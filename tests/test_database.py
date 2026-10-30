@@ -113,3 +113,21 @@ def test_migrations_and_integrity_check(temp_db: DatabaseConnection):
     assert get_current_version(temp_db) == 1
 
     assert check_integrity(temp_db) is True
+
+
+def test_sqlite_wal_mode_and_concurrent_reads(temp_db: DatabaseConnection):
+    """
+    Verifies Phase 2 & 9 requirements:
+    1. WAL (Write-Ahead Logging) journal mode is active.
+    2. Concurrent readers can access tables without being blocked by open read connections.
+    """
+    with temp_db.connection() as conn1:
+        mode = conn1.execute("PRAGMA journal_mode;").fetchone()[0]
+        assert mode.lower() == "wal"
+
+        # Connection 2 reads concurrently
+        with temp_db.connection() as conn2:
+            res1 = conn1.execute("SELECT COUNT(*) FROM products;").fetchone()[0]
+            res2 = conn2.execute("SELECT COUNT(*) FROM customers;").fetchone()[0]
+            assert res1 == 20
+            assert res2 == 40

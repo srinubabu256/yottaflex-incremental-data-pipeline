@@ -17,10 +17,13 @@ FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 def sanitize_cell_value(val: any) -> any:
     """
     Guards against CSV formula injection.
-    Prefixes values starting with formula control characters with a single quote.
+    Prefixes string values starting with formula control characters (=, +, -, @) with a single quote.
+    Preserves native numeric integers and floats.
     """
     if val is None:
         return ""
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        return val
     str_val = str(val)
     if str_val.startswith(FORMULA_PREFIXES):
         return f"'{str_val}"
