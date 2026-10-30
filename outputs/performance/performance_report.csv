@@ -1,2 +1,2 @@
 dataset_label,input_rows,accepted_rows,rejected_rows,reading_time_seconds,processing_time_seconds,aggregation_time_seconds,reconciliation_time_seconds,total_runtime_seconds,records_per_second
-Benchmark_100000_rows,100000,98888,1112,0.4379,4.2673,0.0001,0.4643,5.5167,19792.59
+Benchmark_1000_rows,1000,989,11,0.0051,0.1134,0.0136,0.0252,0.1998,5728.96

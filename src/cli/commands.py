@@ -11,7 +11,8 @@ from src.config.settings import get_settings
 from src.config.logging_config import configure_logging, get_logger
 from src.database.schema import init_db
 from src.database.seed import seed_reference_data
-from src.database.connection import get_db
+from src.database.connection import get_db, DatabaseConnection
+import uuid
 from src.generator.reference_generator import save_reference_data
 from src.generator.event_generator import SyntheticEventGenerator
 from src.generator.scenarios import generate_all_scenarios
@@ -209,16 +210,24 @@ def handle_benchmark(args) -> int:
     gen_time = time.perf_counter() - t0
     print(f"Generated {rows} benchmark events in {gen_time:.2f}s")
 
+    # Use isolated database for benchmarking to ensure pure, accurate fresh measurements
+    bench_db_file = settings.database_path.parent / f"bench_temp_{uuid.uuid4().hex[:6]}.db"
+    init_db(bench_db_file, settings.schema_sql_path)
+    bench_db = DatabaseConnection(bench_db_file)
+    seed_reference_data(bench_db)
+
     # Run pipeline and measure
     t_pipeline_start = time.perf_counter()
-    service = PipelineService()
+    service = PipelineService(bench_db)
     result = service.run_pipeline(bench_file, batch_size=5000)
     pipeline_duration = time.perf_counter() - t_pipeline_start
 
     # Run reconciliation and measure
     t_recon_start = time.perf_counter()
-    checks, passed, failed = generate_reconciliation_report()
+    checks, passed, failed = generate_reconciliation_report(db=bench_db)
     recon_duration = time.perf_counter() - t_recon_start
+
+    db_size_mb = (bench_db_file.stat().st_size / (1024 * 1024)) if bench_db_file.exists() else 0.0
 
     total_time = pipeline_duration + recon_duration
     rps = rows / pipeline_duration if pipeline_duration > 0 else 0.0
@@ -239,7 +248,15 @@ def handle_benchmark(args) -> int:
     out_csv = settings.output_dir / "performance" / "performance_report.csv"
     save_performance_report([bench_result], out_csv)
 
-    db_size_mb = (settings.database_path.stat().st_size / (1024 * 1024)) if settings.database_path.exists() else 0.0
+    # Cleanup isolated benchmark DB
+    del service
+    del bench_db
+    if bench_db_file.exists():
+        try: bench_db_file.unlink()
+        except: pass
+    for extra in settings.database_path.parent.glob(f"{bench_db_file.stem}*"):
+        try: extra.unlink()
+        except: pass
 
     table_data = [
         ["Total Rows", result.input_count],

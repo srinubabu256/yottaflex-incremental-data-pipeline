@@ -5,7 +5,11 @@ Applies recomputation exclusively to affected partitions.
 
 import sqlite3
 from datetime import datetime, timezone
-from src.processing.affected_periods import AffectedPeriodsTracker
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.processing.affected_periods import AffectedPeriodsTracker
+
 from src.aggregation.product_metrics import recompute_product_metric
 from src.aggregation.customer_metrics import recompute_customer_metric
 from src.config.logging_config import get_logger
@@ -15,7 +19,7 @@ logger = get_logger(__name__)
 
 def recompute_affected_metrics(
     conn: sqlite3.Connection,
-    tracker: AffectedPeriodsTracker,
+    tracker: "AffectedPeriodsTracker",
 ) -> tuple[int, int]:
     """
     Deterministically recalculates all affected (business_date, product_id)
