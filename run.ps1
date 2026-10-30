@@ -30,7 +30,7 @@ switch ($Command.ToLower()) {
     }
     "run" {
         if (-not $Arg1) {
-            $Arg1 = "data/sample/valid/01_initial_transactions.csv"
+            $Arg1 = "data/sample/valid/events.csv"
         }
         python -m src.main run --input $Arg1
     }
