@@ -5,8 +5,9 @@ This document transparently records the known engineering boundaries, environmen
 ---
 
 ## 1. Concurrency and Multi-Writer Contention
-- **SQLite Single-Writer Lock**: While SQLite WAL mode permits concurrent reads, write operations acquire an exclusive table-level write lock. Attempting high concurrency writes from multiple external operating system processes can cause `sqlite3.BusyError` if timeout thresholds (default 30s) are exceeded.
-- **Recommended Scale**: Designed for single-worker sequential micro-batch processing or scheduled batch pipelines. For concurrent multi-worker write pipelines, migrating to PostgreSQL is recommended.
+- **SQLite Single-Writer Architecture**: SQLite in WAL (Write-Ahead Logging) mode allows multiple readers to query the database concurrently without blocking or being blocked by an active writer. However, write operations require an exclusive database-level write lock. Consequently, multi-process parallel write streams are not supported; write workloads must be processed sequentially by a single pipeline worker.
+- **Lock Contention**: If multiple processes attempt write transactions simultaneously, non-writing connections wait up to `busy_timeout` (configured at 30,000ms), after which `sqlite3.OperationalError: database is locked` will be raised.
+- **Multi-Writer Scaling**: If future workloads require distributed, concurrent multi-worker writers, migration to a client-server database engine with row-level locking (such as PostgreSQL) will be required.
 
 ---
 

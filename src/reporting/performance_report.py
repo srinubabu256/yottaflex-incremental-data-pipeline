@@ -21,6 +21,8 @@ PERFORMANCE_COLUMNS = [
     "aggregation_time_seconds",
     "reconciliation_time_seconds",
     "total_runtime_seconds",
+    "input_throughput_rps",
+    "accepted_throughput_rps",
     "records_per_second",
 ]
 
@@ -36,9 +38,13 @@ class PerformanceBenchmarkResult:
     aggregation_time_seconds: float
     reconciliation_time_seconds: float
     total_runtime_seconds: float
-    records_per_second: float
+    records_per_second: float = 0.0
+    input_throughput_rps: float = 0.0
+    accepted_throughput_rps: float = 0.0
 
     def to_dict(self) -> dict:
+        in_rps = self.input_throughput_rps or self.records_per_second
+        acc_rps = self.accepted_throughput_rps or (self.accepted_rows / self.total_runtime_seconds if self.total_runtime_seconds > 0 else 0.0)
         return {
             "dataset_label": self.dataset_label,
             "input_rows": self.input_rows,
@@ -49,7 +55,9 @@ class PerformanceBenchmarkResult:
             "aggregation_time_seconds": round(self.aggregation_time_seconds, 4),
             "reconciliation_time_seconds": round(self.reconciliation_time_seconds, 4),
             "total_runtime_seconds": round(self.total_runtime_seconds, 4),
-            "records_per_second": round(self.records_per_second, 2),
+            "input_throughput_rps": round(in_rps, 2),
+            "accepted_throughput_rps": round(acc_rps, 2),
+            "records_per_second": round(self.records_per_second or in_rps, 2),
         }
 
 

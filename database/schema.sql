@@ -1,6 +1,6 @@
 -- ============================================================================
 -- YottaFlex Incremental Data Pipeline - Relational Database Schema
--- Target: SQLite 3.35+ (compatible with PostgreSQL with minimal modification)
+-- Target: SQLite 3.35+ (Standard ANSI SQL; deployment to PostgreSQL requires driver and type adapter changes)
 -- Foreign Key Enforcement: PRAGMA foreign_keys = ON;
 -- Monetary Values: Stored as 64-bit integers in minor units (e.g., INR paise)
 -- ============================================================================

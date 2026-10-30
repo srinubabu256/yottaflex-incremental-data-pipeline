@@ -13,7 +13,7 @@ Use standard Python `sqlite3` with strict parameterized SQL, Write-Ahead Logging
 - **Zero Overhead**: In local pipeline execution, SQLite provides sub-millisecond execution times without network round-trip overhead.
 - **ACID Compliance**: SQLite in WAL mode allows concurrent readers alongside a serial writer with atomic transaction guarantees (`BEGIN IMMEDIATE` and rollback).
 - **Portability**: Fully zero-dependency and local, running identically across platforms without requiring daemon setups or external cloud infrastructure.
-- **SQL Portability**: All queries use standard SQL syntax (ANSI SQL / SQLite 3.35+ compatible) with parameterized queries (`?`), facilitating a straightforward migration path to PostgreSQL when cloud scaling is required.
+- **SQL Portability**: All queries use standard SQL syntax (ANSI SQL / SQLite 3.35+ compatible) with parameterized queries (`?`). While PostgreSQL is not supported out-of-the-box in this release (which exclusively targets embedded SQLite 3.35+ in WAL mode), parameterized queries provide a clear roadmap if client-server RDBMS support is introduced in future releases.
 
 ---
 

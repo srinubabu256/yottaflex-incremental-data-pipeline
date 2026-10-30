@@ -328,10 +328,10 @@ python -m src.main run --input data/generated/events.csv --batch-size 5000
 ## 24. Automated Testing & Coverage
 
 ```bash
-# Run 46 automated tests
+# Run 54 automated tests
 pytest -v
 
-# Run coverage report
+# Run coverage report (88.0% statement coverage)
 pytest --cov=src --cov-report=term-missing
 ```
 
@@ -349,15 +349,16 @@ Computes true aggregates directly from `transactions WHERE status = 'ACTIVE'` an
 ## 26. Performance Benchmarks
 
 ```bash
-# Run benchmark
-python -m src.main benchmark --rows 10000
+# Run benchmark on isolated fresh database
+python -m src.main benchmark --rows 100000 --seed 42
 ```
 
-### Measured Execution Results
-| Dataset Size | Pipeline Runtime | Throughput | Reconciliation Result |
+### Measured Execution Results (100,000 Events, seed=42)
+| Workload / Benchmark Phase | Measured Time | Measured Throughput | Reconciliation Result |
 |---|---|---|---|
-| **100 rows** | 0.073 s | 1,371 rows/sec | 690 PASS, 0 FAIL |
-| **10,000 rows** | 0.487 s | **20,515 rows/sec** | 10,198 PASS, 0 FAIL |
+| **Fresh Ingestion & Aggregation (100,000 rows)** | 24.61 s | 4,063.00 input events/sec<br>(4,021.41 accepted records/sec) | 11,966 PASS, 0 FAIL |
+| **Bulk Group Aggregation Phase Only** | 1.51 s | 359.2x speedup over baseline | Exact Parity |
+| **Deduplication Re-Run (100,000 rows)** | 5.03 s | 19,880.72 rows/sec | 11,966 PASS, 0 FAIL |
 
 ---
 

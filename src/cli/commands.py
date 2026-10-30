@@ -230,7 +230,8 @@ def handle_benchmark(args) -> int:
     db_size_mb = (bench_db_file.stat().st_size / (1024 * 1024)) if bench_db_file.exists() else 0.0
 
     total_time = pipeline_duration + recon_duration
-    rps = rows / pipeline_duration if pipeline_duration > 0 else 0.0
+    input_rps = result.input_count / pipeline_duration if pipeline_duration > 0 else 0.0
+    accepted_rps = result.accepted_count / pipeline_duration if pipeline_duration > 0 else 0.0
 
     bench_result = PerformanceBenchmarkResult(
         dataset_label=f"Benchmark_{rows}_rows",
@@ -242,7 +243,9 @@ def handle_benchmark(args) -> int:
         aggregation_time_seconds=result.aggregation_time_seconds,
         reconciliation_time_seconds=recon_duration,
         total_runtime_seconds=total_time,
-        records_per_second=rps,
+        records_per_second=input_rps,
+        input_throughput_rps=input_rps,
+        accepted_throughput_rps=accepted_rps,
     )
 
     out_csv = settings.output_dir / "performance" / "performance_report.csv"
@@ -268,7 +271,8 @@ def handle_benchmark(args) -> int:
         ["Pipeline Runtime (sec)", f"{pipeline_duration:.4f}"],
         ["Reconciliation Time (sec)", f"{recon_duration:.4f}"],
         ["Total Runtime (sec)", f"{total_time:.4f}"],
-        ["Throughput (rows/sec)", f"{rps:.2f}"],
+        ["Input Event Throughput (events/sec)", f"{input_rps:.2f}"],
+        ["Accepted Record Throughput (records/sec)", f"{accepted_rps:.2f}"],
         ["Database Size (MB)", f"{db_size_mb:.2f} MB"],
         ["Reconciliation Result", f"{passed} PASS, {failed} FAIL"],
         ["Benchmark Report Path", str(out_csv)],
