@@ -91,6 +91,7 @@ def get_db(db_path: Path | str | None = None) -> DatabaseConnection:
     global _default_db
     if db_path is not None:
         return DatabaseConnection(db_path)
-    if _default_db is None:
-        _default_db = DatabaseConnection()
+    current_path = str(get_settings().database_path)
+    if _default_db is None or _default_db.db_path != current_path:
+        _default_db = DatabaseConnection(current_path)
     return _default_db

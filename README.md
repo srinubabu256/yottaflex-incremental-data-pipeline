@@ -88,12 +88,12 @@ Generates all analytical reports in the `outputs/` folder:
 run.bat report
 ```
 
-#### Step 5: Run All 54 Automated Tests
+#### Step 5: Run All 56 Automated Tests
 ```cmd
 run.bat test
 ```
 
-#### Step 6: View Code Coverage (88.0% statement coverage)
+#### Step 6: View Code Coverage (92.0% statement coverage)
 ```cmd
 run.bat cov
 ```
@@ -133,10 +133,10 @@ If you are using **PowerShell**, use `.\run.ps1`:
 # Step 4: Generate all CSV and JSON reports
 .\run.ps1 report
 
-# Step 5: Run all 54 unit and integration tests
+# Step 5: Run all 56 unit and integration tests
 .\run.ps1 test
 
-# Step 6: View code coverage report (88.0%)
+# Step 6: View code coverage report (92.0%)
 .\run.ps1 cov
 
 # Step 7: List quarantined rejected records
@@ -497,10 +497,10 @@ python -m src.main run --input data/generated/events.csv --batch-size 5000
 ## 25. Automated Testing & Coverage
 
 ```bash
-# Run 54 automated tests
+# Run 56 automated tests
 pytest -v
 
-# Run coverage report (88.0% statement coverage)
+# Run coverage report (92.0% statement coverage)
 pytest --cov=src --cov-report=term-missing
 ```
 

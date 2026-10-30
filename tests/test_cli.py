@@ -60,6 +60,19 @@ def test_cli_runs_and_reconciliation_flow(temp_dir: Path):
         with patch.object(sys, "argv", ["main.py", "runs"]):
             assert main() == 0
 
+        # 3b. Run details (existing and non-existing)
+        with patch.object(get_settings(), "database_path", test_db):
+            from src.monitoring.run_tracker import RunTracker
+            from src.database.connection import DatabaseConnection
+            with DatabaseConnection(test_db).connection() as conn:
+                tracker = RunTracker(conn)
+                latest_run = tracker.list_runs(limit=1)[0]
+
+            with patch.object(sys, "argv", ["main.py", "run-details", "--run-id", latest_run["run_id"]]):
+                assert main() == 0
+            with patch.object(sys, "argv", ["main.py", "run-details", "--run-id", "non-existent-id"]):
+                assert main() == 1
+
         # 4. Reconcile
         with patch.object(sys, "argv", ["main.py", "reconcile"]):
             assert main() == 0
@@ -68,8 +81,10 @@ def test_cli_runs_and_reconciliation_flow(temp_dir: Path):
         with patch.object(sys, "argv", ["main.py", "report"]):
             assert main() == 0
 
-        # 6. Rejects
+        # 6. Rejects (both global and by run_id)
         with patch.object(sys, "argv", ["main.py", "rejects"]):
+            assert main() == 0
+        with patch.object(sys, "argv", ["main.py", "rejects", "--run-id", latest_run["run_id"]]):
             assert main() == 0
 
         # 7. Export
@@ -77,6 +92,26 @@ def test_cli_runs_and_reconciliation_flow(temp_dir: Path):
         with patch.object(sys, "argv", ["main.py", "export", "--output", str(export_dir)]):
             assert main() == 0
         assert (export_dir / "daily_product_metrics" / "daily_product_metrics.csv").exists()
+
+
+def test_cli_empty_runs_and_rejects(temp_dir: Path):
+    """Verifies CLI behavior when runs and rejected records are empty."""
+    test_db = temp_dir / "cli_empty.db"
+    with patch.object(get_settings(), "database_path", test_db):
+        with patch.object(sys, "argv", ["main.py", "init-db"]):
+            assert main() == 0
+        with patch.object(sys, "argv", ["main.py", "runs"]):
+            assert main() == 0
+        with patch.object(sys, "argv", ["main.py", "rejects"]):
+            assert main() == 0
+
+
+def test_cli_benchmark_command(temp_dir: Path):
+    """Verifies that the benchmark CLI command executes cleanly with a small sample."""
+    test_db = temp_dir / "cli_bench.db"
+    with patch.object(get_settings(), "database_path", test_db):
+        with patch.object(sys, "argv", ["main.py", "benchmark", "--rows", "20", "--seed", "42"]):
+            assert main() == 0
 
 
 def test_cli_missing_input_file_returns_error():
