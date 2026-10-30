@@ -137,3 +137,29 @@ def test_domain_edge_case_multi_hop_attribute_migration(temp_db: DatabaseConnect
             "SELECT total_revenue_minor FROM daily_customer_metrics WHERE business_date = '2026-10-22' AND customer_id = 'CUST-0002';"
         ).fetchone()
         assert new_cust["total_revenue_minor"] == 60000
+
+
+def test_standalone_single_partition_recompute_helpers(temp_db: DatabaseConnection, create_event_csv):
+    """Directly tests individual recompute_product_metric and recompute_customer_metric functions."""
+    from src.aggregation.product_metrics import recompute_product_metric
+    from src.aggregation.customer_metrics import recompute_customer_metric
+    from datetime import datetime, timezone
+
+    service = PipelineService(temp_db)
+    rows = [{
+        "event_id": "EVT-SINGLE-1", "transaction_id": "TXN-SINGLE-1", "event_version": "1",
+        "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+        "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+        "amount_minor": "15000", "currency": "INR",
+    }]
+    service.run_pipeline(create_event_csv("single_part.csv", rows))
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with temp_db.connection() as conn:
+        # Recompute existing
+        assert recompute_product_metric(conn, "2026-10-25", "PRD-0001", now_iso) is True
+        assert recompute_customer_metric(conn, "2026-10-25", "CUST-0001", now_iso) is True
+
+        # Recompute non-existent / empty partition (deletes obsolete)
+        assert recompute_product_metric(conn, "2026-10-25", "PRD-NONEXISTENT", now_iso) is False
+        assert recompute_customer_metric(conn, "2026-10-25", "CUST-NONEXISTENT", now_iso) is False

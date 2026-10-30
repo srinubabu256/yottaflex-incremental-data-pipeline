@@ -76,3 +76,81 @@ def test_fatal_failure_marks_run_failed(temp_db: DatabaseConnection, create_even
         res = service.run_pipeline(f)
         assert res.status == PipelineRunStatus.FAILED.value
         assert "Simulated Disk Crash" in res.failure_reason
+
+
+def test_retry_after_fatal_failure_recovers_cleanly(temp_db: DatabaseConnection, create_event_csv):
+    """
+    Verifies Phase 9 requirement:
+    When a run fails due to infrastructure error, it does not commit partial corruption,
+    and retrying the exact file afterwards executes successfully without duplicate ledger rows.
+    """
+    rows = [
+        {
+            "event_id": "EVT-RETRY-1", "transaction_id": "TXN-RETRY-1", "event_version": "1",
+            "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "75000", "currency": "INR",
+        }
+    ]
+    f = create_event_csv("retry_test.csv", rows)
+    service = PipelineService(temp_db)
+
+    # First attempt fails fatally
+    with patch("src.processing.event_processor.EventProcessor.process_batch", side_effect=RuntimeError("Transient DB Outage")):
+        res_fail = service.run_pipeline(f)
+        assert res_fail.status == PipelineRunStatus.FAILED.value
+
+    # Second attempt succeeds without mocking failure
+    res_success = service.run_pipeline(f)
+    assert res_success.status == PipelineRunStatus.SUCCESS.value
+    assert res_success.inserted_count == 1
+    assert res_success.accepted_count == 1
+
+    with temp_db.connection() as conn:
+        # Exactly one source_event and one transaction exist
+        evts = conn.execute("SELECT COUNT(*) FROM source_events WHERE transaction_id = 'TXN-RETRY-1';").fetchone()[0]
+        assert evts == 1
+        txns = conn.execute("SELECT COUNT(*) FROM transactions WHERE transaction_id = 'TXN-RETRY-1';").fetchone()[0]
+        assert txns == 1
+
+
+def test_process_failed_file_after_correcting_issue(temp_db: DatabaseConnection, create_event_csv):
+    """
+    Verifies that when a completely invalid file is processed,
+    it records rejections, and after correcting the file and reprocessing,
+    the valid data is accepted and accurately aggregated.
+    """
+    service = PipelineService(temp_db)
+
+    # Initial file: negative amount (completely invalid)
+    bad_rows = [
+        {
+            "event_id": "EVT-FIX-1", "transaction_id": "TXN-FIX-1", "event_version": "1",
+            "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "-5000", "currency": "INR",
+        }
+    ]
+    f_bad = create_event_csv("bad_file.csv", bad_rows)
+    res_bad = service.run_pipeline(f_bad)
+    assert res_bad.rejected_count == 1
+    assert res_bad.accepted_count == 0
+
+    # Corrected file: positive amount
+    good_rows = [
+        {
+            "event_id": "EVT-FIX-1", "transaction_id": "TXN-FIX-1", "event_version": "1",
+            "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "5000", "currency": "INR",
+        }
+    ]
+    f_good = create_event_csv("good_file.csv", good_rows)
+    res_good = service.run_pipeline(f_good)
+    assert res_good.accepted_count == 1
+    assert res_good.rejected_count == 0
+
+    with temp_db.connection() as conn:
+        txn = conn.execute("SELECT * FROM transactions WHERE transaction_id = 'TXN-FIX-1';").fetchone()
+        assert txn is not None
+        assert txn["amount_minor"] == 5000

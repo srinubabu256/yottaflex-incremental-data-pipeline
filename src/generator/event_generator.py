@@ -35,7 +35,23 @@ class SyntheticEventGenerator:
         """
         events: list[dict[str, str]] = []
         active_transactions: dict[str, dict] = {}
+        active_keys: list[str] = []
+        key_to_index: dict[str, int] = {}
         txn_counter = 1
+
+        def _remove_active(t_id: str):
+            idx = key_to_index[t_id]
+            last_k = active_keys[-1]
+            active_keys[idx] = last_k
+            key_to_index[last_k] = idx
+            active_keys.pop()
+            del key_to_index[t_id]
+            del active_transactions[t_id]
+
+        def _add_active(t_id: str, state_dict: dict):
+            key_to_index[t_id] = len(active_keys)
+            active_keys.append(t_id)
+            active_transactions[t_id] = state_dict
 
         for i in range(1, total_events + 1):
             event_id = f"EVT-{i:08d}"
@@ -47,10 +63,10 @@ class SyntheticEventGenerator:
 
             # Determine event type
             roll = self.rng.random()
-            if roll < reverse_ratio and active_transactions:
+            if roll < reverse_ratio and active_keys:
                 # REVERSE
-                txn_id = self.rng.choice(list(active_transactions.keys()))
-                state = active_transactions.pop(txn_id)
+                txn_id = self.rng.choice(active_keys)
+                state = active_transactions[txn_id]
                 new_ver = state["version"] + 1
                 ev_time = state["timestamp"] + timedelta(hours=self.rng.randint(2, 48))
                 event = {
@@ -66,10 +82,11 @@ class SyntheticEventGenerator:
                     "currency": state["currency"],
                 }
                 events.append(event)
+                _remove_active(txn_id)
 
-            elif roll < (reverse_ratio + update_ratio) and active_transactions:
+            elif roll < (reverse_ratio + update_ratio) and active_keys:
                 # UPDATE
-                txn_id = self.rng.choice(list(active_transactions.keys()))
+                txn_id = self.rng.choice(active_keys)
                 state = active_transactions[txn_id]
                 new_ver = state["version"] + 1
                 ev_time = state["timestamp"] + timedelta(hours=self.rng.randint(1, 24))
@@ -120,7 +137,7 @@ class SyntheticEventGenerator:
                 cust_id = self.rng.choice(self.customers)
                 amount = self.rng.randint(100, 100000) * 100  # Stored in paise (integer)
 
-                active_transactions[txn_id] = {
+                _add_active(txn_id, {
                     "version": 1,
                     "timestamp": ev_time,
                     "business_date": biz_date,
@@ -128,7 +145,7 @@ class SyntheticEventGenerator:
                     "customer_id": cust_id,
                     "amount_minor": amount,
                     "currency": DEFAULT_CURRENCY,
-                }
+                })
 
                 event = {
                     "event_id": event_id,

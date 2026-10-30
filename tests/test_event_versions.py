@@ -139,3 +139,82 @@ def test_late_lower_version_rejected(temp_db: DatabaseConnection, create_event_c
         txn = conn.execute("SELECT * FROM transactions WHERE transaction_id = 'TXN-OUT';").fetchone()
         assert txn["latest_version"] == 3
         assert txn["amount_minor"] == 3000
+
+
+def test_conflicting_payload_on_same_transaction_version(temp_db: DatabaseConnection, create_event_csv):
+    """
+    Verifies that when an event with the same transaction_id and event_version
+    arrives with a CONFLICTING payload, it is quarantined and not accepted as a duplicate.
+    """
+    service = PipelineService(temp_db)
+    r1 = [{
+        "event_id": "EVT-CONF-1", "transaction_id": "TXN-CONF", "event_version": "1",
+        "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+        "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+        "amount_minor": "10000", "currency": "INR",
+    }]
+    r2 = [{
+        "event_id": "EVT-CONF-2", "transaction_id": "TXN-CONF", "event_version": "2",
+        "event_type": "UPDATE", "event_timestamp": "2026-10-25T11:00:00Z",
+        "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+        "amount_minor": "20000", "currency": "INR",
+    }]
+    service.run_pipeline(create_event_csv("conf_v1.csv", r1))
+    service.run_pipeline(create_event_csv("conf_v2.csv", r2))
+
+    # Now attempt a DIFFERENT event for version 2 (different event_id and conflicting amount 99999)
+    r2_conflict = [{
+        "event_id": "EVT-CONF-2-DIFF", "transaction_id": "TXN-CONF", "event_version": "2",
+        "event_type": "UPDATE", "event_timestamp": "2026-10-25T11:30:00Z",
+        "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+        "amount_minor": "99999", "currency": "INR",
+    }]
+    res = service.run_pipeline(create_event_csv("conf_v2_bad.csv", r2_conflict))
+    assert res.rejected_count == 1
+    assert res.status == "PARTIAL"
+
+    with temp_db.connection() as conn:
+        rej = conn.execute("SELECT * FROM rejected_records WHERE event_id = 'EVT-CONF-2-DIFF';").fetchone()
+        assert rej is not None
+        assert "Conflicting payload" in rej["rejection_reason"]
+
+        # Authoritative state must still be 20000
+        txn = conn.execute("SELECT * FROM transactions WHERE transaction_id = 'TXN-CONF';").fetchone()
+        assert txn["amount_minor"] == 20000
+
+
+def test_multiple_events_out_of_order_in_batch(temp_db: DatabaseConnection, create_event_csv):
+    """
+    Verifies that when CREATE v=1 and UPDATE v=2 arrive, but followed by late v=1 update attempt,
+    the late lower version is rejected without corrupting the state.
+    """
+    service = PipelineService(temp_db)
+    rows = [
+        {
+            "event_id": "EVT-ORD-1", "transaction_id": "TXN-ORD", "event_version": "1",
+            "event_type": "CREATE", "event_timestamp": "2026-10-25T10:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "1000", "currency": "INR",
+        },
+        {
+            "event_id": "EVT-ORD-3", "transaction_id": "TXN-ORD", "event_version": "3",
+            "event_type": "UPDATE", "event_timestamp": "2026-10-25T12:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "3000", "currency": "INR",
+        },
+        {
+            "event_id": "EVT-ORD-2", "transaction_id": "TXN-ORD", "event_version": "2",
+            "event_type": "UPDATE", "event_timestamp": "2026-10-25T11:00:00Z",
+            "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+            "amount_minor": "2000", "currency": "INR",
+        },
+    ]
+    res = service.run_pipeline(create_event_csv("batch_out_of_order.csv", rows))
+    assert res.accepted_count == 2
+    assert res.rejected_count == 1
+    assert res.status == "PARTIAL"
+
+    with temp_db.connection() as conn:
+        txn = conn.execute("SELECT * FROM transactions WHERE transaction_id = 'TXN-ORD';").fetchone()
+        assert txn["latest_version"] == 3
+        assert txn["amount_minor"] == 3000

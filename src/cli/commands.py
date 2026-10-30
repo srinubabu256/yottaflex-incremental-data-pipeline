@@ -228,9 +228,9 @@ def handle_benchmark(args) -> int:
         input_rows=result.input_count,
         accepted_rows=result.accepted_count,
         rejected_rows=result.rejected_count,
-        reading_time_seconds=pipeline_duration * 0.15,  # Estimated portion
-        processing_time_seconds=pipeline_duration * 0.65,
-        aggregation_time_seconds=pipeline_duration * 0.20,
+        reading_time_seconds=result.reading_time_seconds,
+        processing_time_seconds=result.processing_time_seconds,
+        aggregation_time_seconds=result.aggregation_time_seconds,
         reconciliation_time_seconds=recon_duration,
         total_runtime_seconds=total_time,
         records_per_second=rps,
@@ -239,14 +239,20 @@ def handle_benchmark(args) -> int:
     out_csv = settings.output_dir / "performance" / "performance_report.csv"
     save_performance_report([bench_result], out_csv)
 
+    db_size_mb = (settings.database_path.stat().st_size / (1024 * 1024)) if settings.database_path.exists() else 0.0
+
     table_data = [
         ["Total Rows", result.input_count],
         ["Accepted Rows", result.accepted_count],
         ["Rejected Rows", result.rejected_count],
+        ["CSV Reading Time (sec)", f"{result.reading_time_seconds:.4f}"],
+        ["Processing Time (sec)", f"{result.processing_time_seconds:.4f}"],
+        ["Aggregation Time (sec)", f"{result.aggregation_time_seconds:.4f}"],
         ["Pipeline Runtime (sec)", f"{pipeline_duration:.4f}"],
         ["Reconciliation Time (sec)", f"{recon_duration:.4f}"],
         ["Total Runtime (sec)", f"{total_time:.4f}"],
         ["Throughput (rows/sec)", f"{rps:.2f}"],
+        ["Database Size (MB)", f"{db_size_mb:.2f} MB"],
         ["Reconciliation Result", f"{passed} PASS, {failed} FAIL"],
         ["Benchmark Report Path", str(out_csv)],
     ]

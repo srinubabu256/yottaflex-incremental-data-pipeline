@@ -92,3 +92,26 @@ def test_repeated_reversal_rejected(temp_db: DatabaseConnection, create_event_cs
     with temp_db.connection() as conn:
         rej = conn.execute("SELECT * FROM rejected_records WHERE event_id = 'EVT-REP-3';").fetchone()
         assert rej["rejection_code"] == RejectionCode.INVALID_TRANSACTION_STATE.value
+
+
+def test_reversal_of_unknown_transaction(temp_db: DatabaseConnection, create_event_csv):
+    """
+    Verifies that a REVERSE event targeting a non-existent transaction
+    is quarantined and marked as INVALID_TRANSACTION_STATE.
+    """
+    service = PipelineService(temp_db)
+    r = [{
+        "event_id": "EVT-REV-UNK-1", "transaction_id": "TXN-GHOST-999", "event_version": "2",
+        "event_type": "REVERSE", "event_timestamp": "2026-10-25T14:00:00Z",
+        "business_date": "2026-10-25", "product_id": "PRD-0001", "customer_id": "CUST-0001",
+        "amount_minor": "5000", "currency": "INR",
+    }]
+    res = service.run_pipeline(create_event_csv("rev_ghost.csv", r))
+    assert res.rejected_count == 1
+    assert res.status == "PARTIAL"
+
+    with temp_db.connection() as conn:
+        rej = conn.execute("SELECT * FROM rejected_records WHERE event_id = 'EVT-REV-UNK-1';").fetchone()
+        assert rej is not None
+        assert rej["rejection_code"] == RejectionCode.INVALID_TRANSACTION_STATE.value
+        assert "non-existent" in rej["rejection_reason"].lower()

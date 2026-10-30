@@ -146,6 +146,8 @@ CREATE INDEX IF NOT EXISTS idx_source_events_hash ON source_events (payload_hash
 CREATE INDEX IF NOT EXISTS idx_transactions_biz_prod ON transactions (business_date, product_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_biz_cust ON transactions (business_date, customer_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions (status);
+CREATE INDEX IF NOT EXISTS idx_transactions_cov_prod ON transactions (status, business_date, product_id, amount_minor, customer_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_cov_cust ON transactions (status, business_date, customer_id, amount_minor, product_id);
 
 CREATE INDEX IF NOT EXISTS idx_rejected_records_run_id ON rejected_records (run_id);
 CREATE INDEX IF NOT EXISTS idx_rejected_records_code ON rejected_records (rejection_code);

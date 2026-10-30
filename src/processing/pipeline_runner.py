@@ -45,6 +45,9 @@ class PipelineRunResult:
     duration_seconds: float
     is_idempotent_skip: bool = False
     failure_reason: Optional[str] = None
+    reading_time_seconds: float = 0.0
+    processing_time_seconds: float = 0.0
+    aggregation_time_seconds: float = 0.0
 
 
 class PipelineService:
@@ -116,12 +119,23 @@ class PipelineService:
         total_reversed = 0
         total_errors = 0
         overall_affected = AffectedPeriodsTracker()
+        total_reading_time = 0.0
+        total_processing_time = 0.0
+        total_aggregation_time = 0.0
 
         try:
-            batch_gen = loader.load_batches()
+            batch_iter = iter(loader.load_batches())
             headers_validated = False
 
-            for headers, batch_rows in batch_gen:
+            while True:
+                t_r0 = time.perf_counter()
+                try:
+                    headers, batch_rows = next(batch_iter)
+                except StopIteration:
+                    total_reading_time += (time.perf_counter() - t_r0)
+                    break
+                total_reading_time += (time.perf_counter() - t_r0)
+
                 if not headers_validated:
                     validate_csv_schema(headers)
                     headers_validated = True
@@ -132,7 +146,9 @@ class PipelineService:
                 # Process batch in an atomic database transaction
                 with self.db.transaction() as conn:
                     processor = EventProcessor(conn, run_id, str(path))
+                    t_p0 = time.perf_counter()
                     b_stats, b_affected = processor.process_batch(batch_rows)
+                    total_processing_time += (time.perf_counter() - t_p0)
 
                     total_input += b_stats.input_count
                     total_accepted += b_stats.accepted_count
@@ -144,7 +160,9 @@ class PipelineService:
                     total_errors += b_stats.error_count
 
                     # Targeted recomputation for affected groups within the transaction
+                    t_a0 = time.perf_counter()
                     recompute_affected_metrics(conn, b_affected)
+                    total_aggregation_time += (time.perf_counter() - t_a0)
 
                     for g in b_affected.product_groups:
                         overall_affected.product_groups.add(g)
@@ -200,6 +218,9 @@ class PipelineService:
                 error_count=total_errors,
                 affected_period_count=affected_count,
                 duration_seconds=round(duration, 4),
+                reading_time_seconds=round(total_reading_time, 4),
+                processing_time_seconds=round(total_processing_time, 4),
+                aggregation_time_seconds=round(total_aggregation_time, 4),
             )
 
         except Exception as e:
