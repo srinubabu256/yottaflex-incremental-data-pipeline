@@ -1,40 +1,28 @@
 {
   "pipeline_run": {
-    "run_id": "RUN-20261030072329-96a9b7",
-    "source_file": "D:\\Srinubabu\\yottaflex-incremental-data-pipeline\\data\\generated\\benchmark_10000.csv",
-    "file_checksum": "e14b1e3f8b0475eb9c175cc2b495f433beb5b70b9521a4ca5ee9d9eb8a6c3833",
-    "status": "PARTIAL",
-    "started_at": "2026-10-30T07:23:29.953525+00:00",
-    "completed_at": "2026-10-30T07:23:30.526694+00:00",
-    "input_count": 10000,
-    "accepted_count": 9814,
-    "rejected_count": 186,
-    "inserted_count": 0,
-    "duplicate_count": 9814,
-    "updated_count": 0,
+    "run_id": "RUN-20261030073544-363807",
+    "source_file": "C:\\Users\\hp\\AppData\\Local\\Temp\\pytest-of-hp\\pytest-9\\test_cli_runs_and_reconciliati0\\cli_events.csv",
+    "file_checksum": "c5a22cb1820606db7590ac34587d101d0cbc33540e6a88659361e6267442163f",
+    "status": "SUCCESS",
+    "started_at": "2026-10-30T07:35:44.202410+00:00",
+    "completed_at": "2026-10-30T07:35:44.240166+00:00",
+    "input_count": 25,
+    "accepted_count": 25,
+    "rejected_count": 0,
+    "inserted_count": 17,
+    "duplicate_count": 0,
+    "updated_count": 8,
     "reversed_count": 0,
     "error_count": 0,
-    "affected_period_count": 0,
-    "duration_seconds": 0.5814,
+    "affected_period_count": 34,
+    "duration_seconds": 0.048,
     "failure_reason": null
   },
-  "rejections_breakdown": {
-    "DUPLICATE_EVENT": 76,
-    "INVALID_AMOUNT": 27,
-    "INVALID_EVENT_TYPE": 20,
-    "INVALID_TIMESTAMP": 19,
-    "INVALID_TRANSACTION_STATE": 4,
-    "UNKNOWN_CUSTOMER": 19,
-    "UNKNOWN_PRODUCT": 21
-  },
+  "rejections_breakdown": {},
   "authoritative_transactions": {
     "ACTIVE": {
-      "count": 48295,
-      "total_minor": 240835705700
-    },
-    "REVERSED": {
-      "count": 3205,
-      "total_minor": 15938384300
+      "count": 17,
+      "total_minor": 75676300
     }
   }
 }
