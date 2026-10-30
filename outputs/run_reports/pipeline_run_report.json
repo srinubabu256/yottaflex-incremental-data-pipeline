@@ -1,11 +1,11 @@
 {
   "pipeline_run": {
-    "run_id": "RUN-20261030141244-cdb490",
-    "source_file": "C:\\Users\\hp\\AppData\\Local\\Temp\\pytest-of-hp\\pytest-26\\test_cli_runs_and_reconciliati0\\cli_events.csv",
+    "run_id": "RUN-20261030141714-341bec",
+    "source_file": "C:\\Users\\hp\\AppData\\Local\\Temp\\pytest-of-hp\\pytest-27\\test_cli_runs_and_reconciliati0\\cli_events.csv",
     "file_checksum": "c5a22cb1820606db7590ac34587d101d0cbc33540e6a88659361e6267442163f",
     "status": "SUCCESS",
-    "started_at": "2026-10-30T14:12:44.385978+00:00",
-    "completed_at": "2026-10-30T14:12:44.407679+00:00",
+    "started_at": "2026-10-30T14:17:14.794727+00:00",
+    "completed_at": "2026-10-30T14:17:14.829415+00:00",
     "input_count": 25,
     "accepted_count": 25,
     "rejected_count": 0,
@@ -15,7 +15,7 @@
     "reversed_count": 0,
     "error_count": 0,
     "affected_period_count": 34,
-    "duration_seconds": 0.0266,
+    "duration_seconds": 0.0404,
     "failure_reason": null
   },
   "rejections_breakdown": {},
