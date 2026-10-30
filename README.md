@@ -6,7 +6,7 @@ A high-performance, production-style Python data engineering pipeline that proce
 
 ## Table of Contents
 1. [Project Overview](#1-project-overview)
-2. [Quick Start Guide](#2-quick-start-guide)
+2. [Quick Start & Execution Guide (Step-by-Step)](#2-quick-start--execution-guide-step-by-step)
 3. [Business Problem](#3-business-problem)
 4. [Objectives](#4-objectives)
 5. [Key Features](#5-key-features)
@@ -46,34 +46,145 @@ A high-performance, production-style Python data engineering pipeline that proce
 
 ---
 
-## 2. Quick Start Guide
+## 2. Quick Start & Execution Guide (Step-by-Step)
 
-Run the full end-to-end incremental pipeline and reconciliation in minutes depending on your operating system:
+Follow these simple step-by-step commands to run the entire pipeline, execute tests, verify reconciliation, and view reports.
 
-### Option A: Windows PowerShell (Recommended on Windows)
-```powershell
-# 1. Initialize schema and seed reference data (50 products, 100 customers)
-.\run.ps1 init
+---
 
-# 2. Run all 5 sample incremental event batches and reconcile
-.\run.ps1 sample-run
+### Method A: Windows Command Prompt (`CMD`) — Step-by-Step
 
-# 3. Run automated tests (54 passing tests)
-.\run.ps1 test
+Open Command Prompt (`cmd.exe`) in the project directory `D:\Srinubabu\yottaflex-incremental-data-pipeline`:
 
-# 4. Generate coverage report (88.0% statement coverage)
-.\run.ps1 cov
-```
-
-### Option B: Windows Command Prompt (`CMD`)
+#### Step 1: Initialize Database & Seed Catalogs
+Creates the SQLite database schema and seeds 50 products and 100 customers:
 ```cmd
 run.bat init
+```
+
+#### Step 2: Run End-to-End Incremental Sample Ingestion
+Ingests initial valid events, updates, reversals, late events, and invalid events:
+```cmd
 run.bat sample_run
+```
+> **What this does automatically:**
+> 1. Ingests 50 initial transactions (`CREATE` events)
+> 2. Ingests 20 updates modifying amounts and dates (`UPDATE` events)
+> 3. Ingests 10 cancellations/reversals (`REVERSE` events)
+> 4. Ingests 14 late-arriving events
+> 5. Quarantines 5 invalid events into `rejected_records`
+> 6. Executes the reconciliation audit (**438 / 438 checks PASS**)
+> 7. Exports all final CSV and JSON reports to `outputs/`
+
+#### Step 3: Run Reconciliation Audit Independently
+Verifies that daily aggregates match transactions with 100% mathematical parity:
+```cmd
+run.bat reconcile
+```
+
+#### Step 4: Export Reports to CSV & JSON
+Generates all analytical reports in the `outputs/` folder:
+```cmd
+run.bat report
+```
+
+#### Step 5: Run All 54 Automated Tests
+```cmd
 run.bat test
+```
+
+#### Step 6: View Code Coverage (88.0% statement coverage)
+```cmd
 run.bat cov
 ```
 
-### Option C: Linux / macOS (`Make`)
+#### Step 7: View Quarantined Bad Records
+```cmd
+run.bat rejects
+```
+
+#### Step 8: View Execution History & Run Metrics
+```cmd
+run.bat runs
+```
+
+#### Step 9: Run Performance Benchmark (100,000 Records)
+Runs a high-throughput benchmark in an isolated temporary database:
+```cmd
+run.bat benchmark 100000
+```
+
+---
+
+### Method B: Windows PowerShell (`run.ps1`) — Step-by-Step
+
+If you are using **PowerShell**, use `.\run.ps1`:
+
+```powershell
+# Step 1: Initialize database and seed catalogs
+.\run.ps1 init
+
+# Step 2: Run full end-to-end sample pipeline & reconcile
+.\run.ps1 sample-run
+
+# Step 3: Run reconciliation parity checks
+.\run.ps1 reconcile
+
+# Step 4: Generate all CSV and JSON reports
+.\run.ps1 report
+
+# Step 5: Run all 54 unit and integration tests
+.\run.ps1 test
+
+# Step 6: View code coverage report (88.0%)
+.\run.ps1 cov
+
+# Step 7: List quarantined rejected records
+.\run.ps1 rejects
+
+# Step 8: List pipeline execution runs
+.\run.ps1 runs
+
+# Step 9: Run 100,000-row benchmark
+.\run.ps1 benchmark 100000
+```
+
+---
+
+### Method C: Direct Python CLI Commands (Cross-Platform)
+
+You can also run all subcommands directly with `python -m src.main`:
+
+```bash
+# 1. Initialize schema and reference data
+python -m src.main init-db
+
+# 2. Ingest individual event files
+python -m src.main run --input data/sample/valid/events.csv
+python -m src.main run --input data/sample/updates/events.csv
+python -m src.main run --input data/sample/reversals/events.csv
+python -m src.main run --input data/sample/late_events/events.csv
+python -m src.main run --input data/sample/invalid_events/events.csv
+
+# 3. Run reconciliation engine
+python -m src.main reconcile
+
+# 4. Generate all CSV and JSON reports
+python -m src.main report
+python -m src.main export --output outputs/
+
+# 5. Inspect operational runs and rejected records
+python -m src.main runs
+python -m src.main rejects
+
+# 6. Run automated test suite & coverage
+pytest -v
+pytest --cov=src --cov-report=term-missing
+```
+
+---
+
+### Method D: Linux / macOS (`Make`)
 ```bash
 make init
 make sample-run
@@ -81,24 +192,22 @@ make test
 make cov
 ```
 
-### Option D: Direct Python Commands (Cross-Platform)
-```bash
-# 1. Initialize database schema & seed reference data
-python -m src.main init-db
+---
 
-# 2. Ingest incremental events
-python -m src.main run --input data/sample/valid/events.csv
-python -m src.main run --input data/sample/updates/events.csv
-python -m src.main run --input data/sample/reversals/events.csv
-python -m src.main run --input data/sample/late_events/events.csv
-python -m src.main run --input data/sample/invalid_events/events.csv
+### Generated Output Files (`outputs/` Directory)
 
-# 3. Run reconciliation parity audit
-python -m src.main reconcile
+After running the pipeline, check the `outputs/` folder to view your generated reports:
 
-# 4. Export all analytical CSV & JSON reports
-python -m src.main report
-```
+| Report File | Description |
+|---|---|
+| `outputs/daily_product_metrics/daily_product_metrics.csv` | Recomputed daily product revenue, transaction counts, averages, and reach. |
+| `outputs/daily_customer_metrics/daily_customer_metrics.csv` | Recomputed daily customer revenue, transaction counts, and product diversity. |
+| `outputs/rejected_records/rejected_records.csv` | Quarantined invalid records with exact error codes and failure reasons. |
+| `outputs/reconciliation/reconciliation_report.csv` | Detailed cross-table mathematical parity assertions (438 PASS, 0 FAIL). |
+| `outputs/run_reports/pipeline_runs.csv` | Operational execution ledger with row counts, checksums, and execution times. |
+| `outputs/run_reports/pipeline_run_report.json` | Complete machine-readable audit report of the latest pipeline execution. |
+| `outputs/run_reports/transaction_summary.csv` | Summary of active vs reversed transactions and total minor-unit amounts. |
+| `outputs/performance/performance_report.csv` | Performance benchmarks separating input vs accepted throughput. |
 
 ---
 
