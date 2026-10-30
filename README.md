@@ -6,35 +6,37 @@ A high-performance, production-style Python data engineering pipeline that proce
 
 ## Table of Contents
 1. [Project Overview](#1-project-overview)
-2. [Business Problem](#2-business-problem)
-3. [Objectives](#3-objectives)
-4. [Key Features](#4-key-features)
-5. [Architecture](#5-architecture)
-6. [Technology Stack](#6-technology-stack)
-7. [Project Folder Structure](#7-project-folder-structure)
-8. [Database Design & Schema](#8-database-design--schema)
-9. [Entity Relationships](#9-entity-relationships)
-10. [Data Dictionary](#10-data-dictionary)
-11. [Source Event Data Contract](#11-source-event-data-contract)
-12. [Business Rules](#12-business-rules)
-13. [Event Versioning & Snapshots](#13-event-versioning--snapshots)
-14. [CREATE, UPDATE, and REVERSE Handling](#14-create-update-and-reverse-handling)
-15. [Late Events Handling](#15-late-events-handling)
-16. [Out-of-Order Events](#16-out-of-order-events)
-17. [Idempotency Guarantees](#17-idempotency-guarantees)
-18. [Transaction Recovery and Quarantine](#18-transaction-recovery-and-quarantine)
-19. [Installation & Setup](#19-installation--setup)
-20. [Environment Configuration](#20-environment-configuration)
-21. [Database Initialization](#21-database-initialization)
-22. [Sample & Synthetic Data Generation](#22-sample--synthetic-data-generation)
-23. [Pipeline Execution](#23-pipeline-execution)
-24. [Automated Testing & Coverage](#24-automated-testing--coverage)
-25. [Independent Reconciliation Engine](#25-independent-reconciliation-engine)
-26. [Performance Benchmarks](#26-performance-benchmarks)
-27. [Sample Outputs & Reporting](#27-sample-outputs--reporting)
-28. [System Limitations](#28-system-limitations)
-29. [Future Improvements](#29-future-improvements)
-30. [AI Usage Disclosure](#30-ai-usage-disclosure)
+2. [Quick Start Guide](#2-quick-start-guide)
+3. [Business Problem](#3-business-problem)
+4. [Objectives](#4-objectives)
+5. [Key Features](#5-key-features)
+6. [Architecture](#6-architecture)
+7. [Technology Stack](#7-technology-stack)
+8. [Project Folder Structure](#8-project-folder-structure)
+9. [Database Design & Schema](#9-database-design--schema)
+10. [Entity Relationships](#10-entity-relationships)
+11. [Data Dictionary](#11-data-dictionary)
+12. [Source Event Data Contract](#12-source-event-data-contract)
+13. [Business Rules](#13-business-rules)
+14. [Event Versioning & Snapshots](#14-event-versioning--snapshots)
+15. [CREATE, UPDATE, and REVERSE Handling](#15-create-update-and-reverse-handling)
+16. [Late Events Handling](#16-late-events-handling)
+17. [Out-of-Order Events](#17-out-of-order-events)
+18. [Idempotency Guarantees](#18-idempotency-guarantees)
+19. [Transaction Recovery and Quarantine](#19-transaction-recovery-and-quarantine)
+20. [Installation & Setup](#20-installation--setup)
+21. [Environment Configuration](#21-environment-configuration)
+22. [Database Initialization](#22-database-initialization)
+23. [Sample & Synthetic Data Generation](#23-sample--synthetic-data-generation)
+24. [Pipeline Execution](#24-pipeline-execution)
+25. [Automated Testing & Coverage](#25-automated-testing--coverage)
+26. [Independent Reconciliation Engine](#26-independent-reconciliation-engine)
+27. [Performance Benchmarks](#27-performance-benchmarks)
+28. [Sample Outputs & Reporting](#28-sample-outputs--reporting)
+29. [System Limitations](#29-system-limitations)
+30. [Future Improvements](#30-future-improvements)
+31. [GitHub Push & Submission Instructions](#31-github-push--submission-instructions)
+32. [AI Usage Disclosure](#32-ai-usage-disclosure)
 
 ---
 
@@ -44,7 +46,63 @@ A high-performance, production-style Python data engineering pipeline that proce
 
 ---
 
-## 2. Business Problem
+## 2. Quick Start Guide
+
+Run the full end-to-end incremental pipeline and reconciliation in minutes depending on your operating system:
+
+### Option A: Windows PowerShell (Recommended on Windows)
+```powershell
+# 1. Initialize schema and seed reference data (50 products, 100 customers)
+.\run.ps1 init
+
+# 2. Run all 5 sample incremental event batches and reconcile
+.\run.ps1 sample-run
+
+# 3. Run automated tests (54 passing tests)
+.\run.ps1 test
+
+# 4. Generate coverage report (88.0% statement coverage)
+.\run.ps1 cov
+```
+
+### Option B: Windows Command Prompt (`CMD`)
+```cmd
+run.bat init
+run.bat sample_run
+run.bat test
+run.bat cov
+```
+
+### Option C: Linux / macOS (`Make`)
+```bash
+make init
+make sample-run
+make test
+make cov
+```
+
+### Option D: Direct Python Commands (Cross-Platform)
+```bash
+# 1. Initialize database schema & seed reference data
+python -m src.main init-db
+
+# 2. Ingest incremental events
+python -m src.main run --input data/sample/valid/events.csv
+python -m src.main run --input data/sample/updates/events.csv
+python -m src.main run --input data/sample/reversals/events.csv
+python -m src.main run --input data/sample/late_events/events.csv
+python -m src.main run --input data/sample/invalid_events/events.csv
+
+# 3. Run reconciliation parity audit
+python -m src.main reconcile
+
+# 4. Export all analytical CSV & JSON reports
+python -m src.main report
+```
+
+---
+
+## 3. Business Problem
 
 Modern transactional platforms process millions of discrete events characterized by out-of-order arrivals, late-arriving events, duplicate deliveries, retro-active updates, and cancellations/reversals. Traditional batch pipelines frequently recompute entire historical datasets, leading to high computational costs, or use mutable state overwrites that corrupt analytical aggregates.
 
@@ -56,7 +114,7 @@ YottaFlex solves this by:
 
 ---
 
-## 3. Objectives
+## 4. Objectives
 
 - **Idempotency**: Guarantee that re-running identical files, renamed files, or replaying events produces zero duplicate state changes or revenue inflation.
 - **Out-of-Order Resilience**: Ensure lower versions arriving late do not regress newer transaction states.
@@ -66,7 +124,7 @@ YottaFlex solves this by:
 
 ---
 
-## 4. Key Features
+## 5. Key Features
 
 - **Chunked Pre-Fetching Engine**: Boosts ingestion throughput to over **20,000 rows/second**.
 - **Monotonic Version Management**: Full replacement snapshot semantics with version tracking.
@@ -77,7 +135,7 @@ YottaFlex solves this by:
 
 ---
 
-## 5. Architecture
+## 6. Architecture
 
 ```mermaid
 flowchart TD
@@ -110,7 +168,7 @@ flowchart TD
 
 ---
 
-## 6. Technology Stack
+## 7. Technology Stack
 
 | Component | Technology | Rationale |
 |---|---|---|
@@ -125,7 +183,7 @@ flowchart TD
 
 ---
 
-## 7. Project Folder Structure
+## 8. Project Folder Structure
 
 ```
 yottaflex-incremental-data-pipeline/
@@ -158,14 +216,16 @@ yottaflex-incremental-data-pipeline/
 ├── README.md
 ├── requirements.txt
 ├── pyproject.toml
+├── run.ps1                 # Windows PowerShell task runner
+├── run.bat                 # Windows Command Prompt task runner
+├── Makefile                # Linux / macOS make task runner
 ├── .gitignore
-├── .env.example
-└── Makefile
+└── .env.example
 ```
 
 ---
 
-## 8. Database Design & Schema
+## 9. Database Design & Schema
 
 The database consists of 9 relational tables:
 1. `products`: Master product catalog.
@@ -180,7 +240,7 @@ The database consists of 9 relational tables:
 
 ---
 
-## 9. Entity Relationships
+## 10. Entity Relationships
 
 ```mermaid
 erDiagram
@@ -197,13 +257,13 @@ erDiagram
 
 ---
 
-## 10. Data Dictionary
+## 11. Data Dictionary
 
 Refer to [DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) for full field definitions, types, nullability, constraints, and descriptions.
 
 ---
 
-## 11. Source Event Data Contract
+## 12. Source Event Data Contract
 
 Canonical CSV event header:
 ```csv
@@ -217,7 +277,7 @@ event_id,transaction_id,event_version,event_type,event_timestamp,business_date,p
 
 ---
 
-## 12. Business Rules
+## 13. Business Rules
 
 Refer to [BUSINESS_RULES.md](docs/BUSINESS_RULES.md) for complete transition rules.
 - `CREATE`: Initial version must be 1. Requires valid references. Sets state to `ACTIVE`.
@@ -226,13 +286,13 @@ Refer to [BUSINESS_RULES.md](docs/BUSINESS_RULES.md) for complete transition rul
 
 ---
 
-## 13. Event Versioning & Snapshots
+## 14. Event Versioning & Snapshots
 
 Higher event versions represent full entity replacement snapshots. When version 3 arrives after version 1 (missing version 2), version 3 is accepted as the complete authoritative state. Lower versions arriving out of order are quarantined under `VERSION_CONFLICT`.
 
 ---
 
-## 14. CREATE, UPDATE, and REVERSE Handling
+## 15. CREATE, UPDATE, and REVERSE Handling
 
 | Operation | Current Status | Incoming Version | Next Status | Metric Impact |
 |---|---|---|---|---|
@@ -244,33 +304,33 @@ Higher event versions represent full entity replacement snapshots. When version 
 
 ---
 
-## 15. Late Events Handling
+## 16. Late Events Handling
 
 Events arriving after their occurrence date are assigned strictly to their `business_date`, not their ingestion timestamp. Historical partitions are updated accurately without mutating intermediate dates.
 
 ---
 
-## 16. Out-of-Order Events
+## 17. Out-of-Order Events
 
 An out-of-order event with an event version lower than the current transaction's `latest_version` is rejected with `VERSION_CONFLICT` and quarantined in `rejected_records`. This prevents stale data from corrupting newer states.
 
 ---
 
-## 17. Idempotency Guarantees
+## 18. Idempotency Guarantees
 
 1. **File-Level**: A SHA-256 digest of every input file is stored in `processed_files`. Re-running identical files or renamed copies is safely skipped.
 2. **Event-Level**: `source_events` enforces unique constraints on `event_id` and `(transaction_id, event_version)`. Replaying events results in safe deduplication without double-counting.
 
 ---
 
-## 18. Transaction Recovery and Quarantine
+## 19. Transaction Recovery and Quarantine
 
 - **Row-Level Quarantine**: Corrupt rows are saved in `rejected_records` with exact line numbers and error codes. Valid rows continue processing with run status `PARTIAL`.
 - **Fatal Exception Rollback**: Database errors roll back uncommitted changes within the active batch and mark the run as `FAILED`.
 
 ---
 
-## 19. Installation & Setup
+## 20. Installation & Setup
 
 ```bash
 # Clone repository
@@ -283,7 +343,7 @@ pip install -r requirements.txt
 
 ---
 
-## 20. Environment Configuration
+## 21. Environment Configuration
 
 Copy `.env.example` to `.env` to customize settings:
 ```bash
@@ -292,7 +352,7 @@ cp .env.example .env
 
 ---
 
-## 21. Database Initialization
+## 22. Database Initialization
 
 ```bash
 python -m src.main init-db
@@ -301,7 +361,7 @@ Creates all 9 tables, indexes, generates reference data (`products.csv`, `custom
 
 ---
 
-## 22. Sample & Synthetic Data Generation
+## 23. Sample & Synthetic Data Generation
 
 ```bash
 # Generate 100 sample events and curated test suites
@@ -313,7 +373,7 @@ python -m src.main generate --rows 10000 --seed 42
 
 ---
 
-## 23. Pipeline Execution
+## 24. Pipeline Execution
 
 ```bash
 # Run pipeline on valid sample events
@@ -325,7 +385,7 @@ python -m src.main run --input data/generated/events.csv --batch-size 5000
 
 ---
 
-## 24. Automated Testing & Coverage
+## 25. Automated Testing & Coverage
 
 ```bash
 # Run 54 automated tests
@@ -337,7 +397,7 @@ pytest --cov=src --cov-report=term-missing
 
 ---
 
-## 25. Independent Reconciliation Engine
+## 26. Independent Reconciliation Engine
 
 ```bash
 python -m src.main reconcile
@@ -346,7 +406,7 @@ Computes true aggregates directly from `transactions WHERE status = 'ACTIVE'` an
 
 ---
 
-## 26. Performance Benchmarks
+## 27. Performance Benchmarks
 
 ```bash
 # Run benchmark on isolated fresh database
@@ -362,7 +422,7 @@ python -m src.main benchmark --rows 100000 --seed 42
 
 ---
 
-## 27. Sample Outputs & Reporting
+## 28. Sample Outputs & Reporting
 
 Generate and export all analytical reports:
 ```bash
@@ -382,7 +442,7 @@ Generated files in `outputs/`:
 
 ---
 
-## 28. System Limitations
+## 29. System Limitations
 
 Refer to [LIMITATIONS.md](docs/LIMITATIONS.md) for detailed boundaries:
 - Single-writer SQLite locking model.
@@ -391,7 +451,7 @@ Refer to [LIMITATIONS.md](docs/LIMITATIONS.md) for detailed boundaries:
 
 ---
 
-## 29. Future Improvements
+## 30. Future Improvements
 
 - PostgreSQL / Distributed SQL adapter for concurrent writes.
 - Dynamic FX conversion service for multi-currency buckets.
@@ -400,6 +460,26 @@ Refer to [LIMITATIONS.md](docs/LIMITATIONS.md) for detailed boundaries:
 
 ---
 
-## 30. AI Usage Disclosure
+## 31. GitHub Push & Submission Instructions
+
+Follow these commands to push the complete repository to your public GitHub account:
+
+```bash
+# 1. Verify working tree is clean
+git status
+
+# 2. Set main/master branch
+git branch -M master
+
+# 3. Add your GitHub remote repository (replace with your personal GitHub URL)
+git remote add origin https://github.com/<YOUR_USERNAME>/yottaflex-incremental-data-pipeline.git
+
+# 4. Push all code, commits, tests, and documentation
+git push -u origin master
+```
+
+---
+
+## 32. AI Usage Disclosure
 
 Developed using Google DeepMind's Advanced Agentic Coding environment. All architecture, database schemas, validation engines, state machines, reconciliation logic, and documentation were implemented, tested, and verified against actual execution benchmarks. Refer to [prompt-history/PROMPTS.md](prompt-history/PROMPTS.md).
