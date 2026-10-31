@@ -1,4 +1,4 @@
-business_date,customer_id,transaction_count,total_revenue_minor,average_amount_minor,product_count,last_recomputed_at
+gitbusiness_date,customer_id,transaction_count,total_revenue_minor,average_amount_minor,product_count,last_recomputed_at
 2026-10-30,CUST-0005,1,405500,405500,1,2026-10-30T15:55:20.841252+00:00
 2026-10-30,CUST-0006,1,8128300,8128300,1,2026-10-30T15:55:20.347827+00:00
 2026-10-30,CUST-0018,1,3247500,3247500,1,2026-10-30T15:55:20.841252+00:00
