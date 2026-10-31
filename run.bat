@@ -8,6 +8,7 @@ shift
 if /i "%CMD%"=="init" goto init
 if /i "%CMD%"=="init-db" goto init
 if /i "%CMD%"=="sample-run" goto sample_run
+if /i "%CMD%"=="sample_run" goto sample_run
 if /i "%CMD%"=="run" goto run_single
 if /i "%CMD%"=="reconcile" goto reconcile
 if /i "%CMD%"=="report" goto report
@@ -71,7 +72,9 @@ pytest --cov=src --cov-report=term-missing
 goto end
 
 :benchmark
-python -m src.main benchmark --rows 10000 --seed 42
+set ROWS=%1
+if "%ROWS%"=="" set ROWS=10000
+python -m src.main benchmark --rows %ROWS% --seed 42
 goto end
 
 :clean

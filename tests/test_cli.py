@@ -23,12 +23,16 @@ def test_cli_parser_subcommands():
 
 
 def test_cli_init_db_execution(temp_dir: Path):
-    """Verifies init-db CLI command execution."""
+    """Verifies init-db CLI command execution including --reset flag."""
     test_db = temp_dir / "cli_init.db"
     with patch.object(get_settings(), "database_path", test_db):
         with patch.object(sys, "argv", ["main.py", "init-db"]):
             assert main() == 0
-    assert test_db.exists()
+        assert test_db.exists()
+        # Verify --reset flag
+        with patch.object(sys, "argv", ["main.py", "init-db", "--reset"]):
+            assert main() == 0
+        assert test_db.exists()
 
 
 def test_cli_generate_execution(temp_dir: Path):

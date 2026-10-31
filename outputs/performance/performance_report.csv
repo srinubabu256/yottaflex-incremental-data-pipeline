@@ -1,2 +1,2 @@
 dataset_label,input_rows,accepted_rows,rejected_rows,reading_time_seconds,processing_time_seconds,aggregation_time_seconds,reconciliation_time_seconds,total_runtime_seconds,input_throughput_rps,accepted_throughput_rps,records_per_second
-Benchmark_20_rows,20,20,0,0.0021,0.0087,0.0031,0.0167,0.1223,189.43,189.43,189.43
+Benchmark_20_rows,20,20,0,0.0025,0.0096,0.0026,0.0218,0.1604,144.3,144.3,144.3

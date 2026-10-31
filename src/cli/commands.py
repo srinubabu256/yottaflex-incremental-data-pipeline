@@ -33,6 +33,14 @@ def handle_init_db(args) -> int:
     """Initializes the database schema and seeds reference data."""
     settings = get_settings()
     try:
+        if getattr(args, "reset", False) and settings.database_path.exists():
+            for suffix in ["", "-wal", "-shm"]:
+                p = Path(f"{settings.database_path}{suffix}")
+                if p.exists():
+                    try:
+                        p.unlink()
+                    except OSError:
+                        pass
         init_db(settings.database_path, settings.schema_sql_path)
 
         # Generate reference CSVs if they don't exist

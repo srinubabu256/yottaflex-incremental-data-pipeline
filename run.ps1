@@ -12,7 +12,7 @@ switch ($Command.ToLower()) {
     "init-db" {
         python -m src.main init-db
     }
-    "sample-run" {
+    { $_ -in "sample-run", "sample_run" } {
         Write-Host ">>> 1. Ingesting Valid Events (CREATE v=1)..." -ForegroundColor Cyan
         python -m src.main run --input data/sample/valid/events.csv
         Write-Host ">>> 2. Ingesting Updates (UPDATE v=2)..." -ForegroundColor Cyan

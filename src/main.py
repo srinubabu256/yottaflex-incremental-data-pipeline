@@ -35,7 +35,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # 1. init-db
-    subparsers.add_parser("init-db", help="Initialize database schema and seed reference data")
+    init_parser = subparsers.add_parser("init-db", help="Initialize database schema and seed reference data")
+    init_parser.add_argument("--reset", action="store_true", help="Reset/drop existing database before initializing")
 
     # 2. generate
     gen_parser = subparsers.add_parser("generate", help="Generate synthetic transaction events")
