@@ -1,28 +1,38 @@
 {
   "pipeline_run": {
-    "run_id": "RUN-20261030160022-139058",
-    "source_file": "C:\\Users\\hp\\AppData\\Local\\Temp\\pytest-of-hp\\pytest-41\\test_cli_runs_and_reconciliati0\\cli_events.csv",
-    "file_checksum": "c5a22cb1820606db7590ac34587d101d0cbc33540e6a88659361e6267442163f",
-    "status": "SUCCESS",
-    "started_at": "2026-10-30T16:00:22.716860+00:00",
-    "completed_at": "2026-10-30T16:00:22.751131+00:00",
-    "input_count": 25,
-    "accepted_count": 25,
-    "rejected_count": 0,
-    "inserted_count": 17,
+    "run_id": "RUN-20261031140637-286e95",
+    "source_file": "data\\sample\\invalid_events\\events.csv",
+    "file_checksum": "0166c79e8e0b278343da84982c03b5a60864779a7ed5609294a02e9688c015b1",
+    "status": "PARTIAL",
+    "started_at": "2026-10-31T14:06:37.679255+00:00",
+    "completed_at": "2026-10-31T14:06:37.697693+00:00",
+    "input_count": 5,
+    "accepted_count": 0,
+    "rejected_count": 5,
+    "inserted_count": 0,
     "duplicate_count": 0,
-    "updated_count": 8,
+    "updated_count": 0,
     "reversed_count": 0,
     "error_count": 0,
-    "affected_period_count": 34,
-    "duration_seconds": 0.0482,
+    "affected_period_count": 0,
+    "duration_seconds": 0.0326,
     "failure_reason": null
   },
-  "rejections_breakdown": {},
+  "rejections_breakdown": {
+    "INVALID_AMOUNT": 1,
+    "INVALID_EVENT_TYPE": 1,
+    "MISSING_REQUIRED_FIELD": 1,
+    "UNKNOWN_CUSTOMER": 1,
+    "UNKNOWN_PRODUCT": 1
+  },
   "authoritative_transactions": {
     "ACTIVE": {
-      "count": 17,
-      "total_minor": 75676300
+      "count": 54,
+      "total_minor": 169922100
+    },
+    "REVERSED": {
+      "count": 10,
+      "total_minor": 49108500
     }
   }
 }
